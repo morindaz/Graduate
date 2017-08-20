@@ -1,0 +1,223 @@
+
+library(readr)  #import library
+
+
+
+
+######################User profile table####################
+user_profile_table <- read_csv("E:/datasetYEB/user_profile_table.csv");
+male<- subset(user_profile_table,sex==1)
+totalMale<-length(unlist(male[,2]))  #male number
+totalFemale<-length(unlist(user_profile_table[,2]))-totalMale #female number
+#统计用户的地区频率
+userCity<-table(user_profile_table$city) #y~x  y:numeric variable to be devided  x:grouping variable
+
+
+
+
+
+#mfd_bank_shibor  plot the interbank rate in one day and 7 days
+######################Yields ratetable ####################
+mfd_bank_shibor <- read_csv("E:/datasetYEB/mfd_bank_shibor.csv")
+mfdOverNight<-unlist(mfd_bank_shibor[,2]);
+mfd1W<-unlist(mfd_bank_shibor[,3]);
+mfd2W<-unlist(mfd_bank_shibor[,4]);
+mfd1M<-unlist(mfd_bank_shibor[,5]);
+mfd3M<-unlist(mfd_bank_shibor[,6]);
+mfd6M<-unlist(mfd_bank_shibor[,7]);
+mfd9M<-unlist(mfd_bank_shibor[,8]);
+mfd1Y<-unlist(mfd_bank_shibor[,9]);
+par(mfrow=c(1,2));
+plot(mfdOverNight,type = "b",main ="Overnight SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+plot(mfd1W,type = "b",main ="1-week SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+par(mfrow=c(1,2));
+plot(mfd2W,type = "b",main ="2-week SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+plot(mfd1M,type = "b",main ="1-month SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+par(mfrow=c(1,2));
+plot(mfd3M,type = "b",main ="3-month SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+plot(mfd6M,type = "b",main ="6-month SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+par(mfrow=c(1,2));
+plot(mfd9M,type = "b",main ="9-month SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+plot(mfd1Y,type = "b",main ="1-Year SHIBOR(%)",xlab = "Date",ylab = "Annualized Rates")
+SummaryShibor<-summary(mfd_bank_shibor)
+
+######################澶勭悊Yields ratetable 涓€鏃ヤ互鍙婁竷鏃ョ殑浣欓瀹濆埄鐜?####################
+mfd_day_share_interest <- read_csv("E:/datasetYEB/mfd_day_share_interest.csv")
+
+dayYield<-mfd_day_share_interest[,2];
+dayYield<-unlist(dayYield);
+weekYield<-unlist(mfd_day_share_interest[,3]);
+#对利率情况进行排序
+OrderedWeekYield<-mfd_day_share_interest[order(mfd_day_share_interest$mfd_7daily_yield),]
+SummaryOrderedWeekYield<-summary(OrderedWeekYield)
+dayYieldLength<-length(unlist(dayYield));
+opar<-par(no.readonly = TRUE);
+par(mfrow=c(1,2));
+plot(dayYield,type = "o",main ="Yields Ratetable",xlab = "Date",ylab = "Daily Rate",col="red",lty=2,pch=2);
+plot(weekYield,type = "o",col="black",main ="Yields Ratetable",xlab = "Date",ylab = "Weekly Rate",lty=1,pch=1,new=FALSE);
+#legend("topright",cex = 0.7,title = "Period",c("Daily","Weekly"),lty=c(2,1),pch=c(2,1),col=c("red","black"))
+#
+
+
+######################   user_balance_table      ? ####################
+cables <- read.csv('E:/datasetYEB/user_balance_table/user_balance_table.csv') 
+orderByDate<-cables[order(cables[,2],decreasing=F),]; #order by the second date line 
+totalPRAmount<-orderByDate[,c(2,5)] #c(2,5) choose two lines of purchase
+userPRAmount<-cables[,c(1,5)]; #用户的申购量情况 包括用户id以及申购总量
+
+userReAmount<-cables[,c(1,9)];#用户的赎回量情况  包括用户id以及赎回总量
+userTimes<-table(cables$user_id); #用户的交易次数，看用户是否活跃 sort sequencial??
+View(userTimes) #but it could not be accessed as a data frame
+dataFrameUserTimes<-as.data.frame(userTimes);
+names(dataFrameUserTimes)[1] = 'user_id'; #rename the firsr column as "user_id
+OrderedUserTimes<-dataFrameUserTimes[order(dataFrameUserTimes$Freq),] #according to the user purchase and redeem amount
+#calculate mode of OrderedUserTimes 计算用户的频率情况  只参与一次交易的频率几个  参与400次交易的频率有几个
+ModeUserTrans<-as.data.frame(table(dataFrameUserTimes$Freq));
+#利用summary对于用户交易频率 sort ，计算出交易频率最高的次数 
+SortModeUserTrans<-ModeUserTrans[order(ModeUserTrans$Freq),]
+
+SummaryOrderedUserTimes<-summary(OrderedUserTimes) #analyze user total trail amount
+View(SummaryOrderedUserTimes);
+#按照申购量绘图  顺序的每位用户的申购量情况 id:1,2,3 的申购数量情况绘图
+userPRAggra<-aggregate(total_purchase_amt~user_id,userPRAmount,sum); #calculate the total purchase of every user
+plot(userPRAggra[,2],type = "b",main ="User total Purchase",xlab = "UserId",ylab = "Purchase Amount",col="black",lty=2,pch=1);#单个用户的申购情况
+
+#按照赎回量绘图  顺序的每位用户的申购量情况 id:1,2,3 的赎回数量情况绘图
+userREAggra<-aggregate(total_redeem_amt~user_id,userReAmount,sum); #calculate the total purchase of every user
+plot(userREAggra[,2],type = "b",main ="User total Redeem",xlab = "UserId",ylab = "Redeem Amount",col="black",lty=2,pch=1);#单个用户的申购情况
+
+
+#对单个用户申购数量排序
+OrderedUserPur<-userPRAggra[order(userPRAggra$total_purchase_amt),] 
+SummaryOrderedUserPur<-summary(OrderedUserPur);  #analyze the user purchase 
+#按照申购量排序后单个用户申购数量的绘图
+plot(OrderedUserPur[,2],type = "b",main ="Ordered User total Purchase",xlab = "User",ylab = "Purchase Amount",col="black",lty=2,pch=1);#单个用户的申购情况
+
+
+#对单个用户赎回数量排序
+OrderedUserRe<-userREAggra[order(userREAggra$total_redeem_amt),]
+SummaryOrderedUserRe<-summary(OrderedUserRe); 
+#对单个用户赎回数量排序绘图
+plot(OrderedUserRe[,2],type = "b",main ="Ordered User total Redeem",xlab = "User",ylab = "Redeem Amount",col="black",lty=2,pch=1);#单个用户的申购情况
+
+#将不同交易量的用户分组，统计各个交易额数量内的用户数。如交易额在1000-10000之间的用户数量
+vars<-c("total_redeem_amt")
+head(OrderedUserRe[vars])
+
+totalREAmount<-orderByDate[,c(2,9)] #c(2,9) choose two lines of redeem
+#names(totalPRAmount)   //show the variable names
+aggra<-aggregate(total_purchase_amt~report_date,totalPRAmount,sum) #y~x  y:numeric variable to be devided  x:grouping variable
+summaryAggraPur<-summary(aggra)
+#order today's total purchase 
+Orderedaggra<-aggra[order(aggra$total_purchase_amt),]
+#according to x processing y by function sum  according to date compute the 
+aggraRedeem<-aggregate(total_redeem_amt~report_date,totalREAmount,sum) #aggrate函数
+#order today's total redeem
+OrderedaggraRedeem<-aggraRedeem[order(aggraRedeem$total_redeem_amt),]
+summaryAggraRedeem<-summary(aggraRedeem);
+#plot today's total purchase amount
+plot(aggra[,2],type = "b",main ="Today total purchase",xlab = "Date",ylab = "Purchase Amount",col="red",lty=2,pch=1);
+
+
+#生成七天为周期的数据列表
+sevenDaySeq<-seq(from=0,to = 63,by =7); #生成间隔的序列
+fivDaySeq<-seq(from=0,to = 63,by =5); 
+#截取两个月申购量的数据绘图
+################################################
+#对坐标轴的处理 如何让他七天一个周期显示
+pur2Month <-aggra[1:63,];
+################################################
+plot(pur2Month[,2],type = "b",main ="Daily Total Purchase Within Two Months",xlab = "Date",xaxt="n", ylab = "Purchase Amount",col="red",lty=2,pch=1);
+axis(1,c(sevenDaySeq))#然后再画坐标轴
+
+#截取两个月赎回的数据绘图
+re2Month<-aggraRedeem[1:63,];
+plot(re2Month[,2],type = "b",main ="Daily Total Redeem Within Two Months",xlab = "Date",xaxt="n", ylab = "Redeem Amount",col="red",lty=2,pch=1);
+axis(1,c(fivDaySeq))#然后再画坐标轴
+
+axis(1,c(sevenDaySeq))#然后再画坐标轴
+
+
+#compute two months difference
+diff2Month<-pur2Month-re2Month;
+plot(diff2Month[,2],type = "b",main ="Purchase minus Redeem Within Two Months",xlab = "Date",xaxt="n", ylab = "Difference Amount",col="red",lty=2,pch=1);
+axis(1,c(sevenDaySeq))#然后再画坐标轴
+
+#plot today's total redeem amount
+plot(aggraRedeem[,2],type = "b",main ="Today total redeem",xlab = "Date",ylab = "Redeem Amount",col="black",lty=2,pch=1);
+
+#plot the summary
+
+plot(aggra[,2],type = "b",main ="Today total purchase",xlab = "Date",ylab = "Purchase Amount",col="red",lty=2,pch=1);
+am =1:10
+a =am[2]
+sum =0
+for(i in 3){
+  sum=sum+am[i]
+}
+
+
+#画三维点图Simple illustration for Evaluation index
+x = seq(1,10,1);
+y = seq(1,10,1);
+z1=z2=z3=z4=z5=z6=z7 = matrix(data=NA, nrow=length(x), ncol=length(x));
+for(i in 1:length(x))
+{
+  for(j in 1:length(y))
+  {
+    
+    z1[i,j] = 0;
+    
+  }
+}
+z2=z3=z4=z5=z6=z7=z1;
+z1[5,3]=4.8;
+z2[5,3]=-19.2;
+z3[5,3]=-81.92;
+z4[5,3]=20.48;
+z5[5,3]=3.2;
+z6[5,3]=-12.8;
+z7[5,3]=0;
+z1[8,3]=12;
+z2[8,3]=-26.4;
+z3[8,3]=12;
+z4[8,3]=12;
+z5[8,3]=12;
+z6[8,3]=12;
+z7[8,3]=12;
+z1[5,4]=2.4;
+z2[5,4]=2.4;
+z3[5,4]=2.4;
+z4[5,4]=2.4;
+z5[5,4]=2.4;
+z6[5,4]=2.4;
+z7[5,4]=2.4;
+z1[8,6]=4.8;
+z2[8,6]=4.8;
+z3[8,6]=4.8;
+z4[8,6]=4.8;
+z5[8,6]=4.8;
+z6[8,6]=4.8;
+z7[8,6]=4.8;
+z1[6,8]=-4.8;
+z2[6,8]=-4.8;
+z3[6,8]=-4.8;
+z4[6,8]=-4.8;
+z5[6,8]=-4.8;
+z6[6,8]=-4.8;
+z7[6,8]=-4.8;
+z1[6,6]=0;
+z2[6,6]=0;
+z3[6,6]=0;
+z4[6,6]=0;
+z5[6,6]=0;
+z6[6,6]=0;
+z7[6,6]=0;
+library(plot3D)
+persp3D(x,y,z1,theta=30, phi=50, axes=TRUE,scale=2, box=TRUE, nticks=5, 
+        
+        ticktype="detailed",xlab="X-value", ylab="Y-value", zlab="Z-value", 
+        
+        main="Gaussian Kernal with persp3D()")
+scatter3D(x, y, z, phi = 0, bty = "g", type = "l", 
+          ticktype = "detailed", lwd = 4)
